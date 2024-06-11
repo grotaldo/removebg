@@ -1,6 +1,8 @@
 // Importing necessary modules
 import removeBackground from "@imgly/background-removal-node";
+import sharp from "sharp";
 import fs from "fs";
+import { config } from "process";
 
 const fileName = process.argv[2];
 
@@ -8,7 +10,7 @@ const fileName = process.argv[2];
 async function removeImageBackground(imgSource) {
   try {
     // Removing background
-    const blob = await removeBackground(imgSource);
+    const blob = await removeBackground(imgSource, config);
     // Converting Blob to buffer
     const buffer = Buffer.from(await blob.arrayBuffer());
     // Generating data URL
@@ -35,6 +37,29 @@ async function removeBG(imgSource) {
         encoding: "base64",
       }
     );
+
+    await sharp(`${imgSource}-rbg.png`)
+      .trim()
+      .resize(400, 580, {
+        fit: "contain",
+        background: { r: 0, g: 0, b: 0, alpha: 0 },
+      })
+      .extend({
+        top: 10,
+        bottom: 10,
+        left: 0,
+        right: 0,
+        background: { r: 0, g: 0, b: 0, alpha: 0 },
+      })
+      .toFile(`${imgSource}-400x600.png`);
+
+    await sharp(`${imgSource}-400x600.png`)
+      .extract({ left: 0, top: 0, width: 400, height: 300 })
+      .toFile(`${imgSource}-400x300.png`);
+
+    await sharp(`${imgSource}-400x600.png`)
+      .extract({ left: 138, top: 0, width: 125, height: 125 })
+      .toFile(`${imgSource}-125x125.png`);
   } catch (error) {
     console.log(error);
     process.exit(1);
